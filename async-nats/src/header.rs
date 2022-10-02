@@ -48,6 +48,20 @@ pub struct HeaderMap {
     inner: HashMap<HeaderName, HeaderValue>,
 }
 
+impl From<HeaderMap> for http::HeaderMap {
+    fn from(map: HeaderMap) -> Self {
+        map.iter()
+            .filter_map(|(key, val)| {
+                let mapped_k = http::header::HeaderName::from_bytes(key.as_ref()).ok()?;
+                let mapped_v = http::HeaderValue::from_str(
+                    val.iter().take(1).next()?.as_str()
+                ).ok()?;
+
+                Some((mapped_k, mapped_v))
+            }).collect()
+    }
+}
+
 impl FromIterator<(HeaderName, HeaderValue)> for HeaderMap {
     fn from_iter<T: IntoIterator<Item = (HeaderName, HeaderValue)>>(iter: T) -> Self {
         let mut header_map = HeaderMap::new();
